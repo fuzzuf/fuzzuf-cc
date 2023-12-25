@@ -117,7 +117,7 @@ BBIDAssigner::Result BBIDAssigner::run(Module &M, ModuleAnalysisManager&) {
 extern "C" LLVM_ATTRIBUTE_WEAK
 PassPluginLibraryInfo llvmGetPassPluginInfo() {
   return {
-    LLVM_PLUGIN_API_VERSION, "BasicBlockIDAssigner", "v0.1",
+    LLVM_PLUGIN_API_VERSION, "BasicBlockIDAssigner", "v0.2",
     [](PassBuilder &PB) {
       PB.registerAnalysisRegistrationCallback(
         [](ModuleAnalysisManager &MAM) {

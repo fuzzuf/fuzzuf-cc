@@ -153,7 +153,7 @@ PreservedAnalyses cfgexporter::CFGExporter::run(Module &M, ModuleAnalysisManager
 extern "C" LLVM_ATTRIBUTE_WEAK
 PassPluginLibraryInfo llvmGetPassPluginInfo() {
   return {
-    LLVM_PLUGIN_API_VERSION, "CFGExporter", "v0.1",
+    LLVM_PLUGIN_API_VERSION, "CFGExporter", "v0.2",
     [](PassBuilder &PB) {
 #if LLVM_VERSION_MAJOR <= 13
       using OptimizationLevel = typename PassBuilder::OptimizationLevel;

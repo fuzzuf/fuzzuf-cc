@@ -22,7 +22,7 @@ from fuzzuf_cc.feature.ijonfeedback import IjonFeedbackFactory
 from fuzzuf_cc.feature.forkserver import ForkServerFactory
 from fuzzuf_cc.binary import CLANG
 
-cc = MetaInstrumentor("fuzzuf-cc", version="0.1.0", author="Ricerca Security", base_cc=CLANG)
+cc = MetaInstrumentor("fuzzuf-cc", version="0.2.0", author="Ricerca Security", base_cc=CLANG)
 
 cc.add_feature("bb-id-assigner", BBIDAssignerFactory())
 cc.add_feature("bitmap-feedback", BitMapFeedbackFactory())
