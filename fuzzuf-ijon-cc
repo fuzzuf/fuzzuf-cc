@@ -21,7 +21,7 @@ from fuzzuf_cc.feature.bitmapfeedback import BitMapFeedbackFactory
 from fuzzuf_cc.feature.forkserver import ForkServerFactory
 from fuzzuf_cc.binary import CLANG
 
-cc = Instrumentor("fuzzuf-ijon-cc", version="0.1.0", author="Ricerca Security", base_cc=CLANG)
+cc = Instrumentor("fuzzuf-ijon-cc", version="0.2.0", author="Ricerca Security", base_cc=CLANG)
 
 cc.add_feature(BBIDAssignerFactory())
 cc.add_feature(BitMapFeedbackFactory())

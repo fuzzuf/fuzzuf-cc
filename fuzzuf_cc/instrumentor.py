@@ -61,7 +61,7 @@ class Instrumentor:
     def metadata(self):
         return MetaData("instrumentor", 1, {
             "ccName": "fuzzuf-cc",
-            "ccVersion": "0.1.0",
+            "ccVersion": "0.2.0",
             "name": self.name,
             "version": self.version,
         })

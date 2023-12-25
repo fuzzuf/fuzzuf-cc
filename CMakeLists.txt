@@ -11,14 +11,14 @@ if( ${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.12.0 )
     LANGUAGES CXX C
     HOMEPAGE_URL https://github.com/fuzzuf/fuzzuf-cc
     DESCRIPTION "Extensible compiler for instrumentation"
-    VERSION 0.1.0
+    VERSION 0.2.0
   )
 else()
   PROJECT(
     fuzzuf-cc
     LANGUAGES CXX C
     DESCRIPTION "Extensible compiler for instrumentation"
-    VERSION 0.1.0
+    VERSION 0.2.0
   )
   set( CMAKE_HOMEPAGE_URL_COMPILER "https://github.com/fuzzuf/fuzzuf-cc" )
 endif()
@@ -232,5 +232,3 @@ set( EASYPACK_MAINTAINER "Ricerca Security <fuzzuf-dev@ricsec.co.jp>" )
 set( EASYPACK_COMPRESSION_TYPE "xz" )
 set( EASYPACK_LICENSE_NAME "AGPL v3.0" )
 include(EasyPack)
-
-

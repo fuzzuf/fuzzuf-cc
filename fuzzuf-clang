@@ -18,7 +18,7 @@ from fuzzuf_cc.instrumentor import Instrumentor
 from fuzzuf_cc.feature.forkserver import ForkServerFactory
 from fuzzuf_cc.binary import CLANG
 
-cc = Instrumentor("fuzzuf-clang", version="0.1.0", author="Ricerca Security", base_cc=CLANG)
+cc = Instrumentor("fuzzuf-clang", version="0.2.0", author="Ricerca Security", base_cc=CLANG)
 
 cc.add_feature(ForkServerFactory())
 

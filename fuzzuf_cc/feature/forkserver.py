@@ -22,7 +22,7 @@ class ForkServerSpecification:
     ### protocolbuffer的なものからいい感じにプロトコル仕様を読み取る
     @property
     def version(self):
-        return "0.1.0"
+        return "0.2.0"
 
 # TODO: channelRecv, channelSend を指定できるようにする / バイナリ側に渡す
 class ForkServerFactory(FeatureFactory):

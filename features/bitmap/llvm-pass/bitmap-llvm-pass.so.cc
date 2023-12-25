@@ -189,7 +189,7 @@ PreservedAnalyses AFLCoverage::run(Module &M, ModuleAnalysisManager& MAM) {
 extern "C" LLVM_ATTRIBUTE_WEAK
 PassPluginLibraryInfo llvmGetPassPluginInfo() {
   return {
-    LLVM_PLUGIN_API_VERSION, "AFLCoverage", "v0.1",
+    LLVM_PLUGIN_API_VERSION, "AFLCoverage", "v0.2",
     [](PassBuilder &PB) {
 #if LLVM_VERSION_MAJOR <= 13
       using OptimizationLevel = typename PassBuilder::OptimizationLevel;
