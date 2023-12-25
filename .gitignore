@@ -1,0 +1,20 @@
+*.json
+*.instrumented
+.bash_history
+
+# Byte-compiled / optimized / DLL files
+*.[ao]
+__pycache__/
+*.py[cod]
+*$py.class
+
+*perf.data*
+gmon.out
+*.log
+*.objdump
+
+echo
+build/
+
+!CMakePresets.json
+

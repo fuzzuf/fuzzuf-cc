@@ -1,0 +1,117 @@
+name: fuzzuf-cc Tests
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+env:
+  FOCAL_CMAKE_VERSION: '3.16.3'
+  JAMMY_CMAKE_VERSION: '3.22.1'
+  COMMON_OPTIONS: -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DPATTR_VERSION_RELEASE=${{ github.run_number }}
+  DIAGNOSTIC_OPTIONS: -DENABLE_ADDRSAN=ON -DENABLE_LEAKSAN=ON -DENABLE_UBSAN=ON -DENABLE_STATIC_ANALYZER=ON
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.2
+
+      - name: Setup environment variables
+        run: |
+          echo "DIST_ID=$(lsb_release -i -s | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+          echo "DIST_VERSION=$(lsb_release -r -s)" >> $GITHUB_ENV
+          echo "BRANCH_NAME=${{ steps.branch-name.outputs.current_branch }}" >> $GITHUB_ENV
+
+      - name: Setup CMake version
+        run: |
+          if [[ ${{ env.DIST_VERSION }} == 20.04 ]]; then
+            echo "CMAKE_VERSION=${{ env.FOCAL_CMAKE_VERSION }}" >> $GITHUB_ENV
+          elif [[ ${{ env.DIST_VERSION }} == 22.04 ]]; then
+            echo "CMAKE_VERSION=${{ env.JAMMY_CMAKE_VERSION }}" >> $GITHUB_ENV
+          else
+            echo "CMAKE_VERSION=latest" >> $GITHUB_ENV
+          fi
+
+      - name: Setup APT Repository
+        run: |
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+          if [[ ${{ env.DIST_VERSION }} == 20.04 ]]; then
+            sudo apt-add-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-15 main"
+          elif [[ ${{ env.DIST_VERSION }} == 22.04 ]]; then
+            echo "no need to add repository"
+          else
+            echo "unknown version"
+            exit 1
+          fi
+
+      - name: Install CMake
+        uses: jwlawson/actions-setup-cmake@v1.12
+        with:
+          cmake-version: ${{ env.CMAKE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          sudo sed -i 's/azure\.//' /etc/apt/sources.list
+          sudo apt update -y
+          sudo apt install -y ninja-build libboost-all-dev llvm-15 clang-15 lld-15
+          cmake --version
+          ninja --version
+
+      - name: Setup Build Options
+        run: |
+          if [[ ${{ github.event_name }} == schedule || ${{ github.event_name }} == workflow_dispatch || ${{ github.event_name }} == push ]]; then
+            echo "BUILD_OPTIONS=${{ env.COMMON_OPTIONS }}" >> $GITHUB_ENV
+          else
+            echo "BUILD_OPTIONS=${{ env.COMMON_OPTIONS }} ${{ env.DIAGNOSTIC_OPTIONS }}" >> $GITHUB_ENV
+          fi
+
+      - name: Build (all)
+        run: |
+          mkdir build/
+          cd build/
+          cmake .. ${{ env.BUILD_OPTIONS }}
+          cmake --build . --target all
+
+      - name: Run (test)
+        run: |
+          env CTEST_OUTPUT_ON_FAILURE=1 cmake --build . --target test
+        working-directory: build
+
+      - name: Run (package)
+        run: |
+          cmake --build . --target package
+        working-directory: build
+
+      - name: Copy Debian package
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.APT_HOST }}
+          username: ${{ secrets.APT_USERNAME }}
+          key: ${{ secrets.APT_KEY }}
+          source: "build/*.deb"
+          target: "repo/${{ env.DIST_ID }}/${{ env.DIST_VERSION }}/${{ env.BRANCH_NAME }}/pool"
+          strip_components: 1
+
+      - name: Update Debian package repository
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.APT_HOST }}
+          username: ${{ secrets.APT_USERNAME }}
+          key: ${{ secrets.APT_KEY }}
+          script: update_apt_repository "${{ env.DIST_ID }}/${{ env.DIST_VERSION }}/${{ env.BRANCH_NAME }}"

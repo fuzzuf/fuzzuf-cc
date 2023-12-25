@@ -1,0 +1,5 @@
+subdirs(
+  cat
+  exifutil
+  features
+)
