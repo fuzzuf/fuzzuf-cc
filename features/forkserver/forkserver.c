@@ -82,22 +82,39 @@ void LogError(const char *process_name, const char *format, ...) {
 
 pid_t put_pid;
 
+
+typedef struct {
+  int valid;
+  pid_t self_pid;
+  pid_t child_pid;
+  int signal_number;
+  int signal_code;
+  int signal_status;
+  int kill_errno;
+} LastTimeout;
+
+LastTimeout last_timeout;
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void PUTTimeoutHandler(int sig, siginfo_t *si, void *ucontext) {
 #pragma GCC diagnostic pop
-  LogSuccess(
-      "Forkserver",
-      "PUTTimeoutHandler(pid=%d): pid=%d, signo=%d, code=%d, status=%d\n",
-      getpid(), si->si_pid, si->si_signo, si->si_code, si->si_status);
+  last_timeout.valid = 1;
+  last_timeout.self_pid = getpid();
+  last_timeout.child_pid = si->si_pid;
+  last_timeout.signal_number = si->si_signo;
+  last_timeout.signal_code = si->si_code;
+  last_timeout.signal_status = si->si_status;
 
   // Remove existing alarm
   alarm(0);
 
   int err = kill(put_pid, SIGKILL);
   if (err == -1) {
-    LogError("Forkserver", "Failed to terminate PUT: errno=%d\n", errno);
-    perror("[!] [Daemon] Failed to terminate PUT");
+    last_timeout.kill_errno = errno;
+  }
+  else {
+    last_timeout.kill_errno = 0;
   }
 
   return;
@@ -253,6 +270,7 @@ bool ExecutePUT(RuntimeSettings *settings) {
 
   // In daemon process
 
+  last_timeout.valid = 0;
   // Set timeout of PUT execution
   {
     struct itimerval _old_timeout;
@@ -289,6 +307,20 @@ bool ExecutePUT(RuntimeSettings *settings) {
   while (1) {
     int wstatus;
     pid_t pid = waitpid(put_pid, &wstatus, WUNTRACED);
+    if( last_timeout.valid ) {
+      LogSuccess(
+        "Forkserver",
+        "PUTTimeoutHandler(pid=%d): pid=%d, signo=%d, code=%d, status=%d\n",
+        last_timeout.self_pid, last_timeout.child_pid, last_timeout.signal_number,
+	last_timeout.signal_code, last_timeout.signal_status );
+      if( last_timeout.kill_errno ) {
+	if( last_timeout.kill_errno != ESRCH || pid != put_pid ) {
+          LogError("Forkserver", "Failed to terminate PUT: errno=%d\n", last_timeout.kill_errno );
+          perror("[!] [Daemon] Failed to terminate PUT");
+	}
+      }
+      last_timeout.valid = 0;
+    }
     if (pid == -1) {
       if (errno == EINTR) {
         LogSuccess("ForkServer", "Interrupted. Retrying waitpid()\n");
