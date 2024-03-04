@@ -50,14 +50,6 @@ void LogSuccess(const char *process_name, const char *format, ...) {
 
   va_end(argptr);
 }
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-void LogSuccess(const char *process_name, const char *format, ...) {
-#pragma GCC diagnostic pop
-  // Do nothing
-}
-#endif
 
 void LogInfo(const char *process_name, const char *format, ...) {
   va_list argptr;
@@ -68,6 +60,21 @@ void LogInfo(const char *process_name, const char *format, ...) {
 
   va_end(argptr);
 }
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void LogSuccess(const char *process_name, const char *format, ...) {
+#pragma GCC diagnostic pop
+  // Do nothing
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void LogInfo(const char *process_name, const char *format, ...) {
+#pragma GCC diagnostic pop
+  // Do nothing
+}
+#endif
 
 void LogError(const char *process_name, const char *format, ...) {
   va_list argptr;
