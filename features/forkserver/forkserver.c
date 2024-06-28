@@ -158,15 +158,25 @@ uint64_t DoHandshake() {
 }
 
 int Recv(void *buf, size_t size) {
-  int nbytes = read(FORKSRV_FD_READ, buf, size);
-  if (nbytes < 0) {
-    perror("[!] [ForkServer] Failed to read command");
-    fprintf(stderr, "\tRequested to read %lu bytes, but read %d bytes\n", size,
-            nbytes);
-    fprintf(stderr, "\tTips: Is this forkserver attached to client?\n");
-    exit(EXIT_FAILURE);
+  size_t nread = 0;
+  while (nread < size) {
+    ssize_t res = read(FORKSRV_FD_READ, (char*)buf + nread, size - nread);
+    if (res == -1) {
+      if (errno == EINTR) {
+        continue;
+      }
+
+      perror("[!] [ForkServer] Failed to read command");
+      fprintf(stderr, "\tRequested to read %lu bytes, but read %lu bytes\n", size, res);
+      fprintf(stderr, "\tTips: Is this forkserver attached to client?\n");
+      exit(EXIT_FAILURE);
+    }
+    if (res == 0) {
+      break;
+    }
+    nread += res;
   }
-  return nbytes;
+  return nread;
 }
 
 ForkServerAPI WaitForAPICall() {
